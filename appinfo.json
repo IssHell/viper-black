@@ -1,0 +1,87 @@
+{
+    "appKeys": {
+        "KEY_CONDITIONS": 2,
+        "KEY_IS_RED_ON": 1,
+        "KEY_TEMPERATURE": 0
+    },
+    "capabilities": [
+        "location"
+    ],
+    "companyName": "isshell@mac.com",
+    "longName": "viper-black",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "fonts/mecha.ttf",
+                "name": "MECHA_BOLD_10",
+                "type": "font"
+            },
+            {
+                "file": "fonts/mecha.ttf",
+                "name": "MECHA_BOLD_14",
+                "type": "font"
+            },
+            {
+                "file": "fonts/mecha.ttf",
+                "name": "MECHA_BOLD_18",
+                "type": "font"
+            },
+            {
+                "file": "fonts/mecha.ttf",
+                "name": "MECHA_BOLD_24",
+                "type": "font"
+            },
+            {
+                "file": "fonts/mecha.ttf",
+                "name": "MECHA_BOLD_34",
+                "type": "font"
+            },
+            {
+                "file": "images/bluetooth_small_on.png",
+                "name": "BT_ON",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/battery__low_charging.png",
+                "name": "BATTERY_CHARGING",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/battery__low_20.png",
+                "name": "BATTERY_20",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/battery__low_40.png",
+                "name": "BATTERY_40",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/battery__low_60.png",
+                "name": "BATTERY_60",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/battery__low_80.png",
+                "name": "BATTERY_80",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/battery__low_100.png",
+                "name": "BATTERY_100",
+                "type": "png-trans"
+            }
+        ]
+    },
+    "sdkVersion": "3",
+    "shortName": "viper-black",
+    "targetPlatforms": [
+        "basalt"
+    ],
+    "uuid": "254cd629-36d4-48f0-be45-bb251f8fff3c",
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": true
+    }
+}
