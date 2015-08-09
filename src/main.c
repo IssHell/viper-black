@@ -1,8 +1,12 @@
 #include <pebble.h>
+#include <math.h>
 
 #define KEY_TEMPERATURE 0
 #define KEY_CONDITIONS 1
-#define KEY_IS_RED_ON  2
+#define KEY_UPDATE_UNITS 2
+#define KEY_UPDATE_THEME 3
+#define PERSIST_KEY_UNIT_FORMAT 10
+#define PERSIST_KEY_THEME 11
 
 static Window *s_main_window;
 static TextLayer *s_background_layer;
@@ -122,7 +126,6 @@ static void create_hour_layer(){
 static void create_minutes_layer(){
   // Create minutes Layer
   s_main_minutes_layer = layer_create(GRect(2, 85, 144, 45));
-  //bitmap_layer_set_background_color(s_main_minutes_layer, GColorBlack);
 }
 
 static void create_date_layer(){
@@ -385,31 +388,56 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   }
 }
 
-static void set_color(char is_red[]){
-  if (strncmp(is_red, "on", 2) == 0){
-    APP_LOG(APP_LOG_LEVEL_INFO, "Color red is here");
-    create_background_layer(GColorRed);
-    create_second_hour_layer(GColorRed);
-    create_hour_after_layer(GColorRed);
-  }else{
-    APP_LOG(APP_LOG_LEVEL_INFO, "Color black is here");
-    create_background_layer(GColorBlack);
-    create_second_hour_layer(GColorBlack);
-    create_hour_after_layer(GColorBlack);
-  }
+int Round(float myfloat)
+{
+  double integral;
+  float fraction = (float)modf(myfloat, &integral);
+ 
+  if (fraction >= 0.5)
+    integral += 1;
+  if (fraction <= -0.5)
+    integral -= 1;
+ 
+  return (int)integral;
 }
 
 static void set_weather(char temperature_buffer[8], char conditions_buffer[32]){
   static char weather_layer_buffer[32];
-  // Assemble full string and display
-  snprintf(weather_layer_buffer, sizeof(weather_layer_buffer), "%s | %s", temperature_buffer, conditions_buffer);
-  text_layer_set_text(s_weather_layer, weather_layer_buffer);
+  int x;
+  static float fahrenheit;
+  static float final;
+  if (persist_read_int(PERSIST_KEY_UNIT_FORMAT) == 1){
+    x = atoi(temperature_buffer);
+    fahrenheit = (float)x;
+    final = 1.8 * fahrenheit + 32;
+    snprintf(weather_layer_buffer, sizeof(weather_layer_buffer), "%dF | %s", Round(final), conditions_buffer);
+    text_layer_set_text(s_weather_layer, weather_layer_buffer);
+  }else{
+    // Assemble full string and display
+    snprintf(weather_layer_buffer, sizeof(weather_layer_buffer), "%sC | %s", temperature_buffer, conditions_buffer);
+    text_layer_set_text(s_weather_layer, weather_layer_buffer);
+  }
 }
+
+static void update_unit_setting(int unit, int theme){
+  if (!(persist_exists(PERSIST_KEY_UNIT_FORMAT)) || persist_read_int(PERSIST_KEY_UNIT_FORMAT) != unit) {
+    persist_write_int(PERSIST_KEY_UNIT_FORMAT, unit);
+  }
+  if (!(persist_exists(PERSIST_KEY_THEME)) || persist_read_int(PERSIST_KEY_THEME) != theme) {
+    persist_write_int(PERSIST_KEY_THEME, theme);
+  }
+}
+
+// static void update_theme(int theme){
+//   APP_LOG(APP_LOG_LEVEL_INFO, "Theme: %d", theme);
+// }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   // Store incoming information
   static char temperature_buffer[8];
   static char conditions_buffer[32];
+  static int unit_buffer;
+  static int theme_buffer;
   
   // Read first item
   Tuple *t = dict_read_first(iterator);
@@ -418,14 +446,17 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   while(t != NULL) {
     // Which key was received?
     switch(t->key) {
+    case KEY_UPDATE_UNITS:
+      unit_buffer = (int)t->value->int32;
+      break;
+    case KEY_UPDATE_THEME:
+      theme_buffer = (int)t->value->int32;
+      break;
     case KEY_TEMPERATURE:
-      snprintf(temperature_buffer, sizeof(temperature_buffer), "%dC", (int)t->value->int32);
+      snprintf(temperature_buffer, sizeof(temperature_buffer), "%d", (int)t->value->int32);
       break;
     case KEY_CONDITIONS:
       snprintf(conditions_buffer, sizeof(conditions_buffer), "%s", t->value->cstring);
-      break;
-    case KEY_IS_RED_ON:
-      set_color(t->value->cstring);
       break;
     default:
       APP_LOG(APP_LOG_LEVEL_INFO, "Key %d not recognized!", (int)t->key);
@@ -435,8 +466,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     // Look for next item
     t = dict_read_next(iterator);
   }
-  
+  update_unit_setting(unit_buffer, theme_buffer);
   set_weather(temperature_buffer, conditions_buffer);
+//   if (!(persist_exists(PERSIST_KEY_THEME)) || persist_read_int(PERSIST_KEY_THEME) != theme_buffer) {
+//     update_theme(theme_buffer);
+//   }
 }
 
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {

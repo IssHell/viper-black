@@ -11,7 +11,7 @@ function locationSuccess(pos) {
   // Construct URL
   var url = "http://api.openweathermap.org/data/2.5/weather?lat=" +
       pos.coords.latitude + "&lon=" + pos.coords.longitude;
-
+  console.log("Coords are: " + "lat=" + pos.coords.latitude + " &lon= " + pos.coords.longitude);
   // Send request to OpenWeatherMap
   xhrRequest(url, 'GET', 
     function(responseText) {
@@ -87,7 +87,8 @@ Pebble.addEventListener('webviewclosed',
     var configuration = JSON.parse(decodeURIComponent(e.response));
     console.log('Configuration window returned: ', JSON.stringify(configuration));
     var dictionary = {
-      "KEY_IS_RED_ON": configuration.is_json_on
+      "KEY_UPDATE_UNITS": configuration.use_fahrenheit,
+      "KEY_UPDATE_THEME": configuration.use_black
     };
     console.log('Configuration dictionary: ', JSON.stringify(dictionary));
     // Send to Pebble
