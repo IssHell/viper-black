@@ -77,8 +77,10 @@ Pebble.addEventListener('appmessage',
 
 // Listen for Configuration is launched
 Pebble.addEventListener('showConfiguration', function(e) {
+  //var unit = localStorage.getItem('KEY_UPDATE_UNITS');
+  //console.log('Unit Stored: ', unit);
   // Show config page
-  Pebble.openURL('http://www.drakonart.com/config.html');
+  Pebble.openURL('http://www.drakonart.com/resform.html');
 });
 
 // Listen to Configuration is closed
@@ -88,7 +90,7 @@ Pebble.addEventListener('webviewclosed',
     console.log('Configuration window returned: ', JSON.stringify(configuration));
     var dictionary = {
       "KEY_UPDATE_UNITS": configuration.use_fahrenheit,
-      "KEY_UPDATE_THEME": configuration.use_black
+      "KEY_UPDATE_THEME": configuration.use_white
     };
     console.log('Configuration dictionary: ', JSON.stringify(dictionary));
     // Send to Pebble

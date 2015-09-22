@@ -20,6 +20,10 @@ static TextLayer *s_weather_layer;
 
 static Layer *s_main_minutes_layer;
 
+static int theme_buffer = 0;
+static BatteryChargeState battery_level_buffer;
+static bool connected_buffer;
+
 static char hour_buffer[] = "00";
 static char am_pm_buffer[] = "  ";
 static char hour_before_1_buffer[] = "00";
@@ -95,204 +99,239 @@ static void white_line_update(GPoint first_point,GPoint second_point, GContext *
 }
 
 static void black_line_update(GPoint first_point,GPoint second_point, GContext *ctx){
+  graphics_context_set_stroke_color(ctx, GColorBlack);
+  graphics_context_set_stroke_width(ctx, 1);
+  graphics_draw_line(ctx, first_point, second_point);
+}
+
+static void black_thick_line_update(GPoint first_point,GPoint second_point, GContext *ctx){
+  graphics_context_set_stroke_color(ctx, GColorBlack);
+  graphics_context_set_stroke_width(ctx, 2);
+  graphics_draw_line(ctx, first_point, second_point);
+}
+
+static void red_line_update(GPoint first_point,GPoint second_point, GContext *ctx){
   graphics_context_set_stroke_color(ctx, GColorRed);
   graphics_context_set_stroke_width(ctx, 1);
   graphics_draw_line(ctx, first_point, second_point);
 }
 
-static void create_background_layer(GColor color) {
-  // Create background TextLayer
-  s_background_layer = text_layer_create(GRect(0, 0, 144, 168)); // 144 x 166
-  text_layer_set_background_color(s_background_layer, color);
-}
-
-static void create_am_pm_layer(){
-  // Create hour TextLayer
-  s_am_pm_layer = text_layer_create(GRect(2, 38, 144, 20));
-  text_layer_set_background_color(s_am_pm_layer, GColorClear);
-  text_layer_set_text_color(s_am_pm_layer, GColorWhite);
-  text_layer_set_text(s_am_pm_layer, "  ");
-  //Apply to TextLayer
-  text_layer_set_font(s_am_pm_layer, s_time_font_small);
-  text_layer_set_text_alignment(s_am_pm_layer, GTextAlignmentCenter);
-}
-
-static void create_hour_layer(){
-  // Create hour TextLayer
-  s_hour_layer = text_layer_create(GRect(0, 40, 144, 40));
-  text_layer_set_background_color(s_hour_layer, GColorClear);
-}
-
-static void create_minutes_layer(){
-  // Create minutes Layer
-  s_main_minutes_layer = layer_create(GRect(2, 85, 144, 45));
-}
-
-static void create_date_layer(){
-  s_date_layer = text_layer_create(GRect(0, 145, 80, 20));
-  text_layer_set_background_color(s_date_layer, GColorClear);
-  
-  text_layer_set_text_color(s_date_layer, GColorWhite);
-  text_layer_set_text(s_date_layer, "000 00");
-  
-  text_layer_set_font(s_date_layer, s_time_font_small);
-  text_layer_set_text_alignment(s_date_layer, GTextAlignmentCenter);
+static void create_text_layer(TextLayer *layer, GColor background, GColor text_color, GFont font, GTextAlignment alignment){
+  text_layer_set_background_color(layer, background);
+  text_layer_set_text_color(layer, text_color);
+  text_layer_set_font(layer, font);
+  text_layer_set_text_alignment(layer, alignment);  
 }
 
 static void create_bt_icon_layer(){
-  s_bt_on = gbitmap_create_with_resource(RESOURCE_ID_BT_ON_WHITE);
+  s_bt_on = gbitmap_create_with_resource(RESOURCE_ID_BT_ON);
   s_bt_layer = bitmap_layer_create(GRect(128, 145, 10, 20));
-  bitmap_layer_set_compositing_mode(s_bt_layer, GCompOpOr);
-  bitmap_layer_set_background_color(s_bt_layer, GColorClear);
   bitmap_layer_set_bitmap(s_bt_layer, s_bt_on);
-}
-
-static void bt_handler(bool connected) {
-  // Show current connection state
-  if (connected) {
-    s_bt_on = gbitmap_create_with_resource(RESOURCE_ID_BT_ON_WHITE);
-    bitmap_layer_set_bitmap(s_bt_layer, s_bt_on);
-  } else {
-    s_bt_on = gbitmap_create_with_resource(RESOURCE_ID_BT_ON_BLACK);
-    bitmap_layer_set_bitmap(s_bt_layer, s_bt_on);
-  }
-}
-
-static void create_second_hour_layer(GColor color){ //Hour before Layer
-  // Create main hour TextLayer
-  s_before_hour_1_layer = text_layer_create(GRect(2, 10, 45, 50));
-  text_layer_set_background_color(s_before_hour_1_layer, GColorClear);
-  text_layer_set_text_color(s_before_hour_1_layer, color);
-  text_layer_set_text(s_before_hour_1_layer, "00");
-  //Apply to TextLayer
-  text_layer_set_font(s_before_hour_1_layer, s_time_font);
-  text_layer_set_text_alignment(s_before_hour_1_layer, GTextAlignmentCenter);
-}
-
-static void create_main_hour_layer(){
-  // Create main hour TextLayer
-  s_main_hour_layer = text_layer_create(GRect(45, 0, 60, 60));
-  text_layer_set_background_color(s_main_hour_layer, GColorClear);
-  text_layer_set_text_color(s_main_hour_layer, GColorWhite);
-  text_layer_set_text(s_main_hour_layer, "00");
-  //Apply to TextLayer
-  text_layer_set_font(s_main_hour_layer, s_time_font_big);
-  text_layer_set_text_alignment(s_main_hour_layer, GTextAlignmentCenter);
-}
-
-static void create_hour_after_layer(GColor color){ //Hour after Layer
-  // Create main hour TextLayer
-  s_after_hour_1_layer = text_layer_create(GRect(103, 10, 45, 50));
-  text_layer_set_background_color(s_after_hour_1_layer, GColorClear);
-  text_layer_set_text_color(s_after_hour_1_layer, color);
-  text_layer_set_text(s_after_hour_1_layer, "00");
-  //Apply to TextLayer
-  text_layer_set_font(s_after_hour_1_layer, s_time_font);
-  text_layer_set_text_alignment(s_after_hour_1_layer, GTextAlignmentCenter);
-}
-
-static void canvas_update_proc(Layer *this_layer, GContext *ctx) {
-  // Enable antialiasing
-  graphics_context_set_antialiased(ctx, true);
-  int i = atoi(mins_buffer);
-  
-  if (i <= 5){
-    black_line_update(GPoint(20, 0), GPoint(20, 10), ctx); //5 min
-  }else{
-    white_line_update(GPoint(20, 0), GPoint(20, 10), ctx); //5 min
-  }
-  if (i <= 10){
-    black_line_update(GPoint(30, 0), GPoint(30, 10), ctx); //10 min
-  }else{
-    white_line_update(GPoint(30, 0), GPoint(30, 10), ctx); //10 min
-  }
-  if (i <= 15){
-    black_line_update(GPoint(40, 0), GPoint(40, 20), ctx); //15 min
-  }else{
-    white_line_update(GPoint(40, 0), GPoint(40, 20), ctx); //15 min
-  }
-  if (i <= 20){
-    black_line_update(GPoint(50, 0), GPoint(50, 10), ctx); //20 min
-  }else{
-    white_line_update(GPoint(50, 0), GPoint(50, 10), ctx); //20 min
-  }
-  if (i <= 25){
-    black_line_update(GPoint(60, 0), GPoint(60, 10), ctx); //25 min
-  }else{
-    white_line_update(GPoint(60, 0), GPoint(60, 10), ctx); //25 min
-  }
-  if (i <= 30){
-    black_line_update(GPoint(70, 0), GPoint(70, 40), ctx); //30 min
-  }else{
-    white_line_update(GPoint(70, 0), GPoint(70, 40), ctx); //30 min
-  }
-  if (i <= 35){
-    black_line_update(GPoint(80, 0), GPoint(80, 10), ctx); //35 min
-  }else{
-    white_line_update(GPoint(80, 0), GPoint(80, 10), ctx); //35 min
-  }
-  if (i <= 40){
-    black_line_update(GPoint(90, 0), GPoint(90, 10), ctx); //40 min
-  }else{
-    white_line_update(GPoint(90, 0), GPoint(90, 10), ctx); //40 min
-  }
-  if (i <= 45){
-    black_line_update(GPoint(100, 0), GPoint(100, 20), ctx); //45 min
-  }else{
-    white_line_update(GPoint(100, 0), GPoint(100, 20), ctx); //45 min
-  }
-  if (i <= 50){
-    black_line_update(GPoint(110, 0), GPoint(110, 10), ctx); //50 min
-  }else{
-    white_line_update(GPoint(110, 0), GPoint(110, 10), ctx); //50 min
-  }
-  if (i <= 55){
-    black_line_update(GPoint(120, 0), GPoint(120, 10), ctx); //55 min
-  }else{
-    white_line_update(GPoint(120, 0), GPoint(120, 10), ctx); //55 min
-  }
+  bitmap_layer_set_compositing_mode(s_bt_layer, GCompOpSet);
 }
 
 static void create_battery_icon_layer(){
-  s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_100_WHITE);
+  s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_100);
   s_battery_layer = bitmap_layer_create(GRect(77, 143, 50, 25));
-  bitmap_layer_set_compositing_mode(s_battery_layer, GCompOpOr);
-  bitmap_layer_set_background_color(s_battery_layer, GColorClear);
   bitmap_layer_set_bitmap(s_battery_layer, s_battery_status);
+  bitmap_layer_set_compositing_mode(s_battery_layer, GCompOpOr);
 }
 
-static void battery_handler(BatteryChargeState new_state) {
-  // Write to buffer and display
-  if (new_state.is_charging){
-    s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_CHARGING_WHITE);
-    bitmap_layer_set_bitmap(s_battery_layer, s_battery_status);
-  } else if((new_state.charge_percent <= 20)){
-    s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_20_WHITE);
-    bitmap_layer_set_bitmap(s_battery_layer, s_battery_status);
-  } else if ((new_state.charge_percent == 30) || (new_state.charge_percent == 40)){
-    s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_40_WHITE);
-    bitmap_layer_set_bitmap(s_battery_layer, s_battery_status);
-  } else if ((new_state.charge_percent == 50) || (new_state.charge_percent == 60)){
-    s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_60_WHITE);
-    bitmap_layer_set_bitmap(s_battery_layer, s_battery_status);
-  } else if ((new_state.charge_percent == 70) || (new_state.charge_percent == 80)){
-    s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_80_WHITE);
-    bitmap_layer_set_bitmap(s_battery_layer, s_battery_status);
-  } else if ((new_state.charge_percent == 90) || (new_state.charge_percent == 100)){
-    s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_100_WHITE);
-    bitmap_layer_set_bitmap(s_battery_layer, s_battery_status);
+static void bt_handler(bool connected) {
+  connected_buffer = connected;
+  // Show current connection state
+  if (connected_buffer) {
+    if (theme_buffer == 0){
+      s_bt_on = gbitmap_create_with_resource(RESOURCE_ID_BT_ON);
+    }else{
+      s_bt_on = gbitmap_create_with_resource(RESOURCE_ID_BT_ON_RED);
+    }
+  } else {
+    vibes_short_pulse();
+    if (theme_buffer == 0){
+      s_bt_on = gbitmap_create_with_resource(RESOURCE_ID_BT_OFF);
+    }else{
+      s_bt_on = gbitmap_create_with_resource(RESOURCE_ID_BT_OFF_RED);
+    }
+  }
+  bitmap_layer_set_bitmap(s_bt_layer, s_bt_on);
+  bitmap_layer_set_compositing_mode(s_battery_layer, GCompOpSet);
+}
+
+static void canvas_update_proc(Layer *this_layer, GContext *ctx) {
+  
+  // Enable antialiasing
+  graphics_context_set_antialiased(ctx, true);
+  int i = atoi(mins_buffer); 
+  
+  if (i <= 5){ // 5 min
+    red_line_update(GPoint(20, 0), GPoint(20, 10), ctx); //5 min
+  }else{
+    if (theme_buffer == 0){
+      white_line_update(GPoint(20, 0), GPoint(20, 10), ctx); //5 min
+    }else{
+      black_thick_line_update(GPoint(20, 0), GPoint(20, 10), ctx); //5 min
+    }
+  }
+  if (i <= 10){ // 10 min
+    red_line_update(GPoint(30, 0), GPoint(30, 10), ctx); //5 min
+  }else{
+    if (theme_buffer == 0){
+      white_line_update(GPoint(30, 0), GPoint(30, 10), ctx); //15 min
+    }else{
+      black_thick_line_update(GPoint(30, 0), GPoint(30, 10), ctx); //15 min
+    }
+  }
+  if (i <= 15){ // 15 min
+    red_line_update(GPoint(40, 0), GPoint(40, 20), ctx); //15 min
+  }else{
+    if (theme_buffer == 0){
+      white_line_update(GPoint(40, 0), GPoint(40, 20), ctx); //15 min
+    }else{
+      black_thick_line_update(GPoint(40, 0), GPoint(40, 20), ctx); //15 min
+    }
+  }
+  if (i <= 20){ // 20 min
+    red_line_update(GPoint(50, 0), GPoint(50, 10), ctx); //20 min
+  }else{
+    if (theme_buffer == 0){
+      white_line_update(GPoint(50, 0), GPoint(50, 10), ctx); //20 min
+    }else{
+      black_thick_line_update(GPoint(50, 0), GPoint(50, 10), ctx); //20 min
+    }
+  }
+  if (i <= 25){ // 25 min
+    red_line_update(GPoint(60, 0), GPoint(60, 10), ctx); //25 min
+  }else{
+    if (theme_buffer == 0){
+      white_line_update(GPoint(60, 0), GPoint(60, 10), ctx); //25 min
+    }else{
+      black_thick_line_update(GPoint(60, 0), GPoint(60, 10), ctx); //25 min
+    }
+  }
+  if (i <= 30){ // 30 min
+    red_line_update(GPoint(70, 0), GPoint(70, 40), ctx); //30 min
+  }else{
+    if (theme_buffer == 0){
+      white_line_update(GPoint(70, 0), GPoint(70, 40), ctx); //30 min
+    }else{
+      black_thick_line_update(GPoint(70, 0), GPoint(70, 40), ctx); //30 min
+    }
+  }
+  if (i <= 35){ // 35 min
+    red_line_update(GPoint(80, 0), GPoint(80, 10), ctx); //35 min
+  }else{
+    if (theme_buffer == 0){
+      white_line_update(GPoint(80, 0), GPoint(80, 10), ctx); //35 min
+    }else{
+      black_thick_line_update(GPoint(80, 0), GPoint(80, 10), ctx); //35 min
+    }
+  }
+  if (i <= 40){ // 40 min
+    red_line_update(GPoint(90, 0), GPoint(90, 10), ctx); //40 min
+  }else{
+    if (theme_buffer == 0){
+      white_line_update(GPoint(90, 0), GPoint(90, 10), ctx); //40 min
+    }else{
+      black_thick_line_update(GPoint(90, 0), GPoint(90, 10), ctx); //40 min
+    }
+  }
+  if (i <= 45){ // 45 min
+    red_line_update(GPoint(100, 0), GPoint(100, 20), ctx); //45 min
+  }else{
+    if (theme_buffer == 0){
+      white_line_update(GPoint(100, 0), GPoint(100, 20), ctx); //45 min
+    }else{
+      black_thick_line_update(GPoint(100, 0), GPoint(100, 20), ctx); //45 min
+    }
+  }
+  if (i <= 50){ // 50 min
+    red_line_update(GPoint(110, 0), GPoint(110, 10), ctx); //50 min
+  }else{
+    if (theme_buffer == 0){
+      white_line_update(GPoint(110, 0), GPoint(110, 10), ctx); //50 min
+    }else{
+      black_thick_line_update(GPoint(110, 0), GPoint(110, 10), ctx); //50 min
+    }
+  }
+  if (i <= 55){ // 55 min
+    red_line_update(GPoint(120, 0), GPoint(120, 10), ctx); //55 min
+  }else{
+    if (theme_buffer == 0){
+      white_line_update(GPoint(120, 0), GPoint(120, 10), ctx); //55 min
+    }else{
+      black_thick_line_update(GPoint(120, 0), GPoint(120, 10), ctx); //55 min
+    }
   }
 }
 
-static void create_weather_layer(){
-  s_weather_layer = text_layer_create(GRect(0, 0, 144, 20));
-  text_layer_set_background_color(s_weather_layer, GColorClear);
+static void battery_handler(BatteryChargeState new_state) {
+  battery_level_buffer = new_state;
   
-  text_layer_set_text_color(s_weather_layer, GColorWhite);
-  text_layer_set_text(s_weather_layer, "Loading...");
-  
-  text_layer_set_font(s_weather_layer, s_time_font_small);
-  text_layer_set_text_alignment(s_weather_layer, GTextAlignmentCenter);
+  // Write to buffer and display
+  if (new_state.is_charging){
+    s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_CHARGING);
+    if (theme_buffer == 0){
+      s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_BLACK_CHARGING);
+    } else {
+      s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_BLACK_20);
+    }
+  } else if((new_state.charge_percent <= 20)){
+    if (theme_buffer == 0){
+      s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_20);
+    } else {
+      s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_BLACK_20);
+    }
+  } else if ((new_state.charge_percent == 30) || (new_state.charge_percent == 40)){
+    if (theme_buffer == 0){
+      s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_40);
+    } else {
+      s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_BLACK_40);
+    }
+  } else if ((new_state.charge_percent == 50) || (new_state.charge_percent == 60)){
+    if (theme_buffer == 0){
+      s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_60);
+    } else {
+      s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_BLACK_60);
+    }
+  } else if ((new_state.charge_percent == 70) || (new_state.charge_percent == 80)){
+    if (theme_buffer == 0){
+      s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_80);
+    } else {
+      s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_BLACK_80);
+    }
+  } else if ((new_state.charge_percent == 90) || (new_state.charge_percent == 100)){
+    if (theme_buffer == 0){
+//       APP_LOG(APP_LOG_LEVEL_INFO, "Using OPTION 1");
+      s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_100);
+    } else {
+      s_battery_status = gbitmap_create_with_resource(RESOURCE_ID_BATTERY_BLACK_100);
+    }
+  }
+  bitmap_layer_set_bitmap(s_battery_layer, s_battery_status);
+  bitmap_layer_set_compositing_mode(s_battery_layer, GCompOpSet);
+}
+
+static void update_theme(){
+  if (theme_buffer == 1){
+    text_layer_set_background_color(s_background_layer, GColorWhite);
+    text_layer_set_text_color(s_weather_layer, GColorBlack); // Weather
+    text_layer_set_text_color(s_main_hour_layer, GColorBlack); // Main hour
+    text_layer_set_text_color(s_am_pm_layer, GColorBlack); // AM / PM 
+    text_layer_set_text_color(s_date_layer, GColorBlack); // Date 
+    text_layer_set_text_color(s_before_hour_1_layer, GColorRed); // Before
+    text_layer_set_text_color(s_after_hour_1_layer, GColorRed); // After
+  } else if (theme_buffer == 0) {
+    text_layer_set_background_color(s_background_layer, GColorBlack);
+    text_layer_set_text_color(s_weather_layer, GColorWhite); // Weather
+    text_layer_set_text_color(s_main_hour_layer, GColorWhite); // Main hour
+    text_layer_set_text_color(s_am_pm_layer, GColorWhite); // AM / PM
+    text_layer_set_text_color(s_date_layer, GColorWhite); // Date
+    text_layer_set_text_color(s_before_hour_1_layer, GColorRed); // Before
+    text_layer_set_text_color(s_after_hour_1_layer, GColorRed); // After
+  }
+  battery_handler(battery_level_buffer);
+  bt_handler(connected_buffer);
 }
 
 static void main_window_load(Window *window) {
@@ -301,39 +340,58 @@ static void main_window_load(Window *window) {
   s_time_font_medium = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_MECHA_BOLD_18));
   s_time_font_small = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_MECHA_BOLD_14));
   s_time_font_extra_small = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_MECHA_BOLD_10));
-  // Create background layer
-  create_background_layer(GColorBlack);
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_background_layer));
-  // Create AM-PM layer
-  create_am_pm_layer();
+  theme_buffer = persist_read_int(PERSIST_KEY_THEME);
+  APP_LOG(APP_LOG_LEVEL_INFO, "Theme: %d", theme_buffer);
+  
+  s_background_layer = text_layer_create(GRect(0, 0, 144, 168)); // 144 x 166 Create background layer
+  s_am_pm_layer = text_layer_create(GRect(2, 38, 144, 20)); // Create AM-PM layer
+  s_hour_layer = text_layer_create(GRect(0, 40, 144, 40)); // Create Hour layer and its child layers
+  s_main_hour_layer = text_layer_create(GRect(45, 0, 60, 60));
+  s_before_hour_1_layer = text_layer_create(GRect(2, 10, 45, 50));
+  s_after_hour_1_layer = text_layer_create(GRect(103, 10, 45, 50));
+  s_main_minutes_layer = layer_create(GRect(2, 85, 144, 45)); // Create Minutes Layers and its child layers
+  s_date_layer = text_layer_create(GRect(0, 145, 80, 20)); // Create Date Layers
+  s_weather_layer = text_layer_create(GRect(0, 0, 144, 20)); // Weather Layer
+  
+  if (theme_buffer == 1){
+    create_text_layer(s_background_layer, GColorWhite, GColorClear, s_time_font_small, GTextAlignmentCenter);
+    create_text_layer(s_am_pm_layer, GColorClear, GColorBlack, s_time_font_small, GTextAlignmentCenter);
+    create_text_layer(s_hour_layer, GColorClear, GColorClear, s_time_font_small, GTextAlignmentCenter);
+    create_text_layer(s_main_hour_layer, GColorClear, GColorBlack, s_time_font_big, GTextAlignmentCenter);
+    create_text_layer(s_before_hour_1_layer, GColorClear, GColorRed, s_time_font, GTextAlignmentCenter);
+    create_text_layer(s_after_hour_1_layer, GColorClear, GColorRed, s_time_font, GTextAlignmentCenter);
+    create_text_layer(s_date_layer, GColorClear, GColorBlack, s_time_font_small, GTextAlignmentCenter);
+    create_text_layer(s_weather_layer, GColorClear, GColorBlack, s_time_font_small, GTextAlignmentCenter);
+  }else{
+    create_text_layer(s_background_layer, GColorBlack, GColorClear, s_time_font_small, GTextAlignmentCenter);
+    create_text_layer(s_am_pm_layer, GColorClear, GColorWhite, s_time_font_small, GTextAlignmentCenter);
+    create_text_layer(s_hour_layer, GColorClear, GColorClear, s_time_font_small, GTextAlignmentCenter);
+    create_text_layer(s_main_hour_layer, GColorClear, GColorWhite, s_time_font_big, GTextAlignmentCenter);
+    create_text_layer(s_before_hour_1_layer, GColorClear, GColorRed, s_time_font, GTextAlignmentCenter);
+    create_text_layer(s_after_hour_1_layer, GColorClear, GColorRed, s_time_font, GTextAlignmentCenter);
+    create_text_layer(s_date_layer, GColorClear, GColorWhite, s_time_font_small, GTextAlignmentCenter);
+    create_text_layer(s_weather_layer, GColorClear, GColorWhite, s_time_font_small, GTextAlignmentCenter);
+  }
+  
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_background_layer));  
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_am_pm_layer));
-  // Create Hour layer and its child layers
-  create_hour_layer();
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_hour_layer));
-  
-  create_main_hour_layer();
   layer_add_child(text_layer_get_layer(s_hour_layer), text_layer_get_layer(s_main_hour_layer));
-  
-  create_second_hour_layer(GColorRed);
   layer_add_child(text_layer_get_layer(s_hour_layer), text_layer_get_layer(s_before_hour_1_layer));
-  
-  create_hour_after_layer(GColorRed);
-  layer_add_child(text_layer_get_layer(s_hour_layer), text_layer_get_layer(s_after_hour_1_layer));
-  // Create Minutes Layers and its child layers
-  create_minutes_layer();
+  layer_add_child(text_layer_get_layer(s_hour_layer), text_layer_get_layer(s_after_hour_1_layer));  
   layer_add_child(window_get_root_layer(window), s_main_minutes_layer);
-  // Create Minutes Layers
-  create_date_layer();
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_date_layer));
+  text_layer_set_text(s_weather_layer, "Loading...");
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_weather_layer));
+  
   // BT Layer
   create_bt_icon_layer();
   layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_bt_layer));
+  
   // Battery Layer
   create_battery_icon_layer();
   layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_battery_layer));
-  // Weather Layer
-  create_weather_layer();
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_weather_layer));
+  
   // Set the update_proc
   layer_set_update_proc(s_main_minutes_layer, canvas_update_proc);
   // Show current connection state
@@ -353,16 +411,15 @@ static void main_window_unload(Window *window) {
   fonts_unload_custom_font(s_time_font_extra_small);
   
   // Destroy TextLayers
+  text_layer_destroy(s_background_layer);
   text_layer_destroy(s_am_pm_layer);
   text_layer_destroy(s_hour_layer);
-  text_layer_destroy(s_background_layer);
   text_layer_destroy(s_main_hour_layer);
   text_layer_destroy(s_before_hour_1_layer);
   text_layer_destroy(s_after_hour_1_layer);
+  layer_destroy(s_main_minutes_layer);
   text_layer_destroy(s_date_layer);
   text_layer_destroy(s_weather_layer);
-  
-  layer_destroy(s_main_minutes_layer);
   
   gbitmap_destroy(s_bt_on);
   bitmap_layer_destroy(s_bt_layer);
@@ -419,25 +476,23 @@ static void set_weather(char temperature_buffer[8], char conditions_buffer[32]){
   }
 }
 
-static void update_unit_setting(int unit, int theme){
+static void update_unit_setting(int unit){
   if (!(persist_exists(PERSIST_KEY_UNIT_FORMAT)) || persist_read_int(PERSIST_KEY_UNIT_FORMAT) != unit) {
     persist_write_int(PERSIST_KEY_UNIT_FORMAT, unit);
   }
+}
+
+static void update_theme_setting(int theme){
   if (!(persist_exists(PERSIST_KEY_THEME)) || persist_read_int(PERSIST_KEY_THEME) != theme) {
     persist_write_int(PERSIST_KEY_THEME, theme);
   }
 }
-
-// static void update_theme(int theme){
-//   APP_LOG(APP_LOG_LEVEL_INFO, "Theme: %d", theme);
-// }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   // Store incoming information
   static char temperature_buffer[8];
   static char conditions_buffer[32];
   static int unit_buffer;
-  static int theme_buffer;
   
   // Read first item
   Tuple *t = dict_read_first(iterator);
@@ -448,9 +503,12 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     switch(t->key) {
     case KEY_UPDATE_UNITS:
       unit_buffer = (int)t->value->int32;
+      update_unit_setting(unit_buffer); 
       break;
     case KEY_UPDATE_THEME:
       theme_buffer = (int)t->value->int32;
+      update_theme_setting(theme_buffer);
+      update_theme();
       break;
     case KEY_TEMPERATURE:
       snprintf(temperature_buffer, sizeof(temperature_buffer), "%d", (int)t->value->int32);
@@ -466,11 +524,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     // Look for next item
     t = dict_read_next(iterator);
   }
-  update_unit_setting(unit_buffer, theme_buffer);
+  
   set_weather(temperature_buffer, conditions_buffer);
-//   if (!(persist_exists(PERSIST_KEY_THEME)) || persist_read_int(PERSIST_KEY_THEME) != theme_buffer) {
-//     update_theme(theme_buffer);
-//   }
 }
 
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {

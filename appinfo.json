@@ -15,39 +15,84 @@
     "resources": {
         "media": [
             {
+                "file": "images/bluetooth_black_off.png",
+                "name": "BT_OFF_RED",
+                "type": "png"
+            },
+            {
+                "file": "images/bluetooth_black.png",
+                "name": "BT_ON_RED",
+                "type": "png"
+            },
+            {
+                "file": "images/bluetooth_white_off.png",
+                "name": "BT_OFF",
+                "type": "png"
+            },
+            {
                 "file": "images/bluetooth_small_on.png",
                 "name": "BT_ON",
-                "type": "png-trans"
+                "type": "png"
             },
             {
-                "file": "images/battery__low_charging.png",
+                "file": "images/battery_charging.png",
                 "name": "BATTERY_CHARGING",
-                "type": "png-trans"
+                "type": "png"
             },
             {
-                "file": "images/battery__low_100.png",
+                "file": "images/battery_black_charging.png",
+                "name": "BATTERY_BLACK_CHARGING",
+                "type": "png"
+            },
+            {
+                "file": "images/battery_black_100.png",
+                "name": "BATTERY_BLACK_100",
+                "type": "png"
+            },
+            {
+                "file": "images/battery_black_80.png",
+                "name": "BATTERY_BLACK_80",
+                "type": "png"
+            },
+            {
+                "file": "images/battery_black_60.png",
+                "name": "BATTERY_BLACK_60",
+                "type": "png"
+            },
+            {
+                "file": "images/battery_black_40.png",
+                "name": "BATTERY_BLACK_40",
+                "type": "png"
+            },
+            {
+                "file": "images/battery_black_20.png",
+                "name": "BATTERY_BLACK_20",
+                "type": "png"
+            },
+            {
+                "file": "images/battery_100.png",
                 "name": "BATTERY_100",
-                "type": "png-trans"
+                "type": "png"
             },
             {
-                "file": "images/battery__low_80.png",
+                "file": "images/battery_80.png",
                 "name": "BATTERY_80",
-                "type": "png-trans"
+                "type": "png"
             },
             {
-                "file": "images/battery__low_60.png",
+                "file": "images/battery_60.png",
                 "name": "BATTERY_60",
-                "type": "png-trans"
+                "type": "png"
             },
             {
-                "file": "images/battery__low_40.png",
+                "file": "images/battery_40.png",
                 "name": "BATTERY_40",
-                "type": "png-trans"
+                "type": "png"
             },
             {
-                "file": "images/battery__low_20.png",
+                "file": "images/battery_20.png",
                 "name": "BATTERY_20",
-                "type": "png-trans"
+                "type": "png"
             },
             {
                 "file": "fonts/mecha.ttf",
@@ -82,7 +127,7 @@
         "basalt"
     ],
     "uuid": "254cd629-36d4-48f0-be45-bb251f8fff3c",
-    "versionLabel": "1.1",
+    "versionLabel": "1.2",
     "watchapp": {
         "watchface": true
     }
